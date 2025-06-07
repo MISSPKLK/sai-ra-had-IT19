@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สุ่มคำใบ้พี่รหัส IT19</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body {
+    font-family: 'Prompt', sans-serif;
+    background: linear-gradient(135deg, #0f0f27, #212043, #2c3064);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+}
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .glow {
+            text-shadow: 0 0 10px rgba(66, 153, 225, 0.8);
+        }
+        .btn-blue {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            transition: all 0.3s ease;
+        }
+        .btn-blue:hover:not(:disabled) {
+            background: linear-gradient(45deg, #2a5298, #1e3c72);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-blue:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti-fall 3s ease-in-out infinite;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+        }
+        .saved-hint {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .new-hint-card {
+            animation: cardAppear 0.7s ease-out;
+        }
+        @keyframes cardAppear {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .hint-card {
+            transition: all 0.5s ease;
+            transform-style: preserve-3d;
+        }
+        .hint-front, .hint-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .hint-back {
+            transform: rotateY(180deg);
+        }
+        
+    </style>
+</head>
+<body class="text-white">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 glow">คำใบ้พี่รหัส IT19</h1>
+            <p class="text-blue-200">IT19 - เชื่อมความสัมพันธ์พี่น้อง IT</p>
+        </header>
+        <div class="flex flex-col items-center justify-center">
+            <div class="card rounded-xl p-6 w-full max-w-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center text-blue-300">สุ่มคำใบ้จากพี่รหัส</h2>
+                <p class="text-center mb-6 text-blue-200">กรอกรหัสนักศึกษา และกดปุ่มเพื่อสุ่มคำใบ้</p>
+                
+                <div id="studentIdSection" class="mb-6">
+                    <label class="block mb-2 text-blue-200">รหัสนักศึกษาของคุณ (10 หลัก)</label>
+                    <input type="text" id="studentId" maxlength="10" class="w-full px-4 py-2 rounded-lg bg-blue-900/50 border border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white mb-2" placeholder="กรอกรหัสนักศึกษา" required>
+                    <p id="warningText" class="text-red-400 text-sm mt-1 hidden">กรุณากรอกเฉพาะตัวเลขเท่านั้น</p>
+                    <p class="text-xs text-yellow-300">* สุ่มได้เพียงครั้งเดียวต่อรหัสนักศึกษา</p>
+                </div>
+                
+                <button id="randomButton" class="w-full btn-blue text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center">
+                    <span>สุ่มคำใบ้</span>
+                </button>
+                
+                <div id="alreadyRandomized" class="hidden mt-4 p-3 bg-yellow-800/50 border border-yellow-700 rounded-lg text-yellow-200 text-center">
+                    คุณได้สุ่มคำใบ้ไปแล้ว กำลังแสดงผลคำใบ้ที่คุณเคยได้รับ
+                </div>
+                
+                <div id="loadingSection" class="hidden mt-6 flex flex-col items-center">
+                    <div class="loading w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-3"></div>
+                    <p class="text-blue-300">กำลังสุ่มคำใบ้...</p>
+                </div>
+                
+                <div id="errorSection" class="hidden mt-6 p-4 bg-red-900/50 border border-red-700 rounded-lg text-center">
+                    <p class="text-red-200">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อ</p>
+                </div>
+            </div>
+            
+            <div id="hintCardContainer" class="hidden relative w-full max-w-lg h-64 perspective-1000">
+                <div id="hintCard" class="hint-card absolute w-full h-full">
+                    <div class="hint-front card rounded-xl p-6 flex flex-col items-center justify-center w-full h-full">
+                        <h3 class="text-xl font-bold mb-3 text-blue-300">คำใบ้ของคุณ</h3>
+                        <p id="hintText" class="text-center text-lg"></p>
+                        <button id="linksheet" class="mt-4 btn-blue text-white py-2 px-4 rounded-lg font-medium">กรอกคำใบ้</button><br>
+                        <small id="teun" class="class=text-center mb-6 text-yellow-300">* ปุ่มนี้จะเป็นลิ้งก์กดไปชีทให้น้องกรอกคำใบ้ที่ได้ (รอรายชื่อน้อง)</small>
+                </div>
+            </div>
+            
+        <footer class="mt-12 text-center text-blue-300 text-sm">
+            <p>💻 สายรหัส IT19 - เชื่อมความสัมพันธ์พี่น้อง IT</p>
+        </footer>
+    </div>
+
+    <script>
+
+        const studentInput = document.getElementById('studentId');
+        const warningText = document.getElementById('warningText');
+
+        studentInput.addEventListener('input', () => {
+         const onlyNumbers = studentInput.value.replace(/[^0-9]/g, '');
+
+    // ถ้ามีอักขระไม่ใช่ตัวเลข แสดงข้อความแจ้งเตือน
+         if (studentInput.value !== onlyNumbers) {
+        warningText.classList.remove('hidden');
+         } else {
+         warningText.classList.add('hidden');
+         }
+
+         // เคลียร์อักขระที่ไม่ใช่ตัวเลขออก
+        studentInput.value = onlyNumbers;
+        });
+
+
+        //เชื่อมสุปป้าเบส
+        const supabaseUrl = 'https://flxnhqfknfyimnhsqhva.supabase.co'; // เปลี่ยนเป็น URL ของคุณ
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZseG5ocWZrbmZ5aW1uaHNxaHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjEyMTYsImV4cCI6MjA2NDc5NzIxNn0.i2CwcWa-5l99NX9GxD9lNAftd43J8pozsR0XdJ7E4Ic'; // เปลี่ยนเป็น API Key ของคุณ
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        //var
+        let hintData = [];
+        let currentHint = null;
+        
+        //Google Sheet
+        const sheetId = '1M1ibN2VjUCOZx_L1LSFtKDwiQzYys8xXMWdX78noVgw';
+        const sheetName = 'Sheet1';
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+        
+        // Supabase Functions 
+        //ตรวจสอบว่านักศึกษาได้สุ่มไปแล้วหรือไม่
+        async function checkStudentHint(studentId) {
+            try {
+                const { data, error } = await supabase
+                    .from('student_hints')
+                    .select('*')
+                    .eq('student_id', studentId)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    throw error;
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Error checking student hint:', error);
+                return null;
+            }
+        }
+        
+        //บันทึกคำใบ้ของนักศึกษา
+        async function saveStudentHint(studentId, hint) {
+            try {
+                const { data, error } = await supabase
+                    .from('student_hints')
+                    .insert([
+                        {
+                            student_id: studentId,
+                            hint: hint,
+                            created_at: new Date().toISOString()
+                        }
+                    ]);
+                
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Error saving student hint:', error);
+                throw error;
+            }
+        }
+        
+        //เพิ่มคำใบ้ที่ใช้แล้ว
+        async function markHintAsUsed(hint) {
+            try {
+                const { data, error } = await supabase
+                    .from('used_hints')
+                    .insert([
+                        {
+                            hint: hint,
+                            used_at: new Date().toISOString()
+                        }
+                    ]);
+                
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Error marking hint as used:', error);
+                throw error;
+            }
+        }
+        
+        //ดึงคำใบ้ที่ใช้แล้ว
+        async function getUsedHints() {
+            try {
+                const { data, error } = await supabase
+                    .from('used_hints')
+                    .select('hint');
+                
+                if (error) throw error;
+                return data.map(item => item.hint);
+            } catch (error) {
+                console.error('Error getting used hints:', error);
+                return [];
+            }
+        }
+        
+        //รีเซ็ตคำใบ้ที่ใช้แล้ว
+        async function resetUsedHints() {
+            try {
+                const { error } = await supabase
+                    .from('used_hints')
+                    .delete()
+                    .neq('id', 0); // ลบทั้งหมด
+                
+                if (error) throw error;
+                return true;
+            } catch (error) {
+                console.error('Error resetting used hints:', error);
+                throw error;
+            }
+        }
+        
+        //ฟังก์ชันรีเซ็ตทั้งหมด
+        async function resetAllData() {
+            try {
+                // ลบข้อมูลคำใบ้ที่ใช้แล้ว
+                await supabase.from('used_hints').delete().neq('id', 0);
+                
+                // ลบข้อมูลคำใบ้ของนักศึกษา
+                await supabase.from('student_hints').delete().neq('id', 0);
+                
+                return true;
+            } catch (error) {
+                console.error('Error resetting all data:', error);
+                throw error;
+            }
+        }
+        
+        //functions
+        async function fetchSheetData() {
+            try {
+                document.getElementById('loadingSection').classList.remove('hidden');
+                document.getElementById('randomButton').classList.add('hidden');
+                document.getElementById('errorSection').classList.add('hidden');
+                
+                const response = await fetch(sheetUrl);
+                if (!response.ok) {
+                    throw new Error('ไม่สามารถโหลดข้อมูลได้');
+                }
+                
+                const csvData = await response.text();
+                const rows = parseCSV(csvData);
+                
+                hintData = rows.slice(1).map(row => ({
+                    hint: row[2] || ''
+                })).filter(item => item.hint.trim() !== '');
+                
+                document.getElementById('loadingSection').classList.add('hidden');
+                document.getElementById('randomButton').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error fetching sheet data:', error);
+                document.getElementById('loadingSection').classList.add('hidden');
+                document.getElementById('randomButton').classList.remove('hidden');
+                document.getElementById('errorSection').classList.remove('hidden');
+            }
+        }
+        
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            return lines.map(line => {
+                const result = [];
+                let currentValue = '';
+                let insideQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        result.push(currentValue.replace(/^"|"$/g, ''));
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                
+                result.push(currentValue.replace(/^"|"$/g, ''));
+                return result;
+            });
+        }
+        
+        async function getRandomHint() {
+            try {
+                const usedHints = await getUsedHints();
+                const availableHints = hintData.filter(hint => !usedHints.includes(hint.hint));
+                
+                if (availableHints.length === 0) {
+                    return null;
+                }
+                
+                const randomIndex = Math.floor(Math.random() * availableHints.length);
+                return availableHints[randomIndex];
+            } catch (error) {
+                console.error('Error getting random hint:', error);
+                return null;
+            }
+        }
+        
+        //ตกแต่ง
+        function createConfetti() {
+            const confettiContainer = document.createElement('div');
+            confettiContainer.style.position = 'fixed';
+            confettiContainer.style.top = '0';
+            confettiContainer.style.left = '0';
+            confettiContainer.style.width = '100%';
+            confettiContainer.style.height = '100%';
+            confettiContainer.style.pointerEvents = 'none';
+            confettiContainer.style.zIndex = '1000';
+            document.body.appendChild(confettiContainer);
+            
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.opacity = Math.random();
+                    confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s ease-in-out infinite`;
+                    
+                    confettiContainer.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 20);
+            }
+            
+            setTimeout(() => {
+                confettiContainer.remove();
+            }, 6000);
+        }
+        
+        function displayHint(hint) {
+            document.getElementById('hintText').textContent = hint.hint || hint;
+            document.getElementById('hintCardContainer').classList.remove('hidden');
+        }
+        
+        function resetCardDisplay() {
+            document.getElementById('hintCardContainer').classList.add('hidden');
+            document.getElementById('hintCard').classList.remove('flipped');
+            document.getElementById('alreadyRandomized').classList.add('hidden');
+        }
+        
+        //  Event Listeners 
+        document.addEventListener('DOMContentLoaded', async () => {
+            // โหลดข้อมูลจาก Google Sheet
+            await fetchSheetData();
+            
+            // รีเซ็ตการแสดงผลการ์ดเมื่อโหลดหน้าใหม่
+            resetCardDisplay();
+            
+            // ตรวจสอบรหัสนักศึกษาที่บันทึกไว้
+            const savedStudentId = localStorage.getItem('lastStudentId');
+            if (savedStudentId) {
+                document.getElementById('studentId').value = savedStudentId;
+                
+                // ตรวจสอบจาก Supabase ว่าเคยสุ่มแล้วหรือไม่
+                const existingHint = await checkStudentHint(savedStudentId);
+                if (existingHint) {
+                    displayHint(existingHint.hint);
+                    document.getElementById('alreadyRandomized').classList.remove('hidden');
+                    
+                    document.getElementById('randomButton').classList.add('btn-disabled');
+                    document.getElementById('randomButton').disabled = true;
+                    document.getElementById('randomButton').textContent = 'คุณได้สุ่มคำใบ้แล้ว';
+                }
+            }
+            
+            // ตรวจสอบเมื่อมีการเปลี่ยนรหัสนักศึกษา
+            document.getElementById('studentId').addEventListener('input', async (e) => {
+                const studentId = e.target.value.trim();
+                
+                resetCardDisplay();
+                document.getElementById('randomButton').classList.remove('btn-disabled');
+                document.getElementById('randomButton').disabled = false;
+                document.getElementById('randomButton').textContent = 'สุ่มคำใบ้';
+                
+                if (studentId.length === 10) {
+                    localStorage.setItem('lastStudentId', studentId);
+                    const existingHint = await checkStudentHint(studentId);
+                    if (existingHint) {
+                        displayHint(existingHint.hint);
+                        document.getElementById('alreadyRandomized').classList.remove('hidden');
+                        document.getElementById('randomButton').classList.add('btn-disabled');
+                        document.getElementById('randomButton').disabled = true;
+                        document.getElementById('randomButton').textContent = 'คุณได้สุ่มคำใบ้แล้ว';
+                    }
+                }
+            });
+            
+            // ปุ่มสุ่มคำใบ้
+            document.getElementById('randomButton').addEventListener('click', async () => {
+                const studentId = document.getElementById('studentId').value;
+                createConfetti();
+                
+                if (!studentId || studentId.length !== 10) {
+                    alert('กรุณากรอกรหัสนักศึกษาให้ครบ 10 หลัก');
+                    return;
+                }
+                
+                localStorage.setItem('lastStudentId', studentId);
+                
+                // ตรวจสอบจาก Supabase ว่าเคยสุ่มแล้วหรือไม่
+                const existingHint = await checkStudentHint(studentId);
+                if (existingHint) {
+                    alert('⚠️ รหัสนักศึกษานี้ได้สุ่มคำใบ้ไปแล้ว! คุณสามารถสุ่มได้เพียงครั้งเดียวเท่านั้น');
+                    displayHint(existingHint.hint);
+                    document.getElementById('alreadyRandomized').classList.remove('hidden');
+                    
+                    document.getElementById('randomButton').classList.add('btn-disabled');
+                    document.getElementById('randomButton').disabled = true;
+                    document.getElementById('randomButton').textContent = 'คุณได้สุ่มคำใบ้แล้ว';
+                    return;
+                }
+                
+                // สุ่มคำใบ้ใหม่
+                document.getElementById('loadingSection').classList.remove('hidden');
+                document.getElementById('randomButton').style.display = 'none';
+                
+                try {
+                    currentHint = await getRandomHint();
+                    
+                    if (!currentHint) {
+                        alert('ขออภัย! คำใบ้ทั้งหมดถูกใช้ไปแล้ว กรุณาติดต่อผู้ดูแลระบบ');
+                        return;
+                    }
+                    
+                    // บันทึกลง Supabase
+                    await saveStudentHint(studentId, currentHint.hint);
+                    await markHintAsUsed(currentHint.hint);
+                    
+                    // แสดงคำใบ้
+                    displayHint(currentHint);
+                    
+                    // ปิดปุ่มสุ่มใหม่
+                    document.getElementById('randomButton').classList.add('btn-disabled');
+                    document.getElementById('randomButton').disabled = true;
+                    document.getElementById('randomButton').textContent = 'คุณได้สุ่มคำใบ้แล้ว';
+                    
+                } catch (error) {
+                    console.error('Error during randomization:', error);
+                    alert('เกิดข้อผิดพลาดในการสุ่มคำใบ้ กรุณาลองใหม่อีกครั้ง');
+                } finally {
+                    document.getElementById('loadingSection').classList.add('hidden');
+                    document.getElementById('randomButton').style.display = 'flex';
+                }
+            });
+            
+            // ปุ่มเปิดเผยพี่รหัส
+            document.getElementById('linksheet').addEventListener('click', () => {
+                //window.open('ไว้ใส่ลิงค์ชีท', '_blank');
+            });
+            
+            
+            
+        });
+    </script>
+    <footer class="mt-12 text-center text-blue-300 text-sm">
+            <p>💻 สายรหัส IT19 - เชื่อมความสัมพันธ์พี่น้อง IT</p>
+            <p class="mt-1 text-xs text-blue-400">Powered by Supabase 🚀</p>
+        </footer>
+</body>
+</html> 
