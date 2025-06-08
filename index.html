@@ -180,7 +180,7 @@
         const sheetName = 'Sheet1';
         const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
         
-        // Supabase Functions 
+        //Supabase Functions 
         //ตรวจสอบว่านักศึกษาได้สุ่มไปแล้วหรือไม่
         async function checkStudentHint(studentId) {
             try {
@@ -276,7 +276,7 @@
         //ฟังก์ชันรีเซ็ตทั้งหมด
         async function resetAllData() {
             try {
-                // ลบข้อมูลคำใบ้ที่ใช้แล้ว
+                //ลบข้อมูลคำใบ้ที่ใช้แล้ว
                 await supabase.from('used_hints').delete().neq('id', 0);
                 
                 //ลบข้อมูลคำใบ้ของนักศึกษา
@@ -435,7 +435,7 @@
                 }
             }
             
-            // ตรวจสอบเมื่อมีการเปลี่ยนรหัสนักศึกษา
+            //ตรวจสอบเมื่อมีการเปลี่ยนรหัสนักศึกษา
             document.getElementById('studentId').addEventListener('input', async (e) => {
                 const studentId = e.target.value.trim();
                 
