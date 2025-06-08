@@ -154,14 +154,14 @@
         studentInput.addEventListener('input', () => {
          const onlyNumbers = studentInput.value.replace(/[^0-9]/g, '');
 
-    // ถ้ามีอักขระไม่ใช่ตัวเลข แสดงข้อความแจ้งเตือน
+    //ถ้ามีอักขระไม่ใช่ตัวเลข แสดงข้อความแจ้งเตือน
          if (studentInput.value !== onlyNumbers) {
         warningText.classList.remove('hidden');
          } else {
          warningText.classList.add('hidden');
          }
 
-         // เคลียร์อักขระที่ไม่ใช่ตัวเลขออก
+         //เคลียร์อักขระที่ไม่ใช่ตัวเลขออก
         studentInput.value = onlyNumbers;
         });
 
@@ -279,7 +279,7 @@
                 // ลบข้อมูลคำใบ้ที่ใช้แล้ว
                 await supabase.from('used_hints').delete().neq('id', 0);
                 
-                // ลบข้อมูลคำใบ้ของนักศึกษา
+                //ลบข้อมูลคำใบ้ของนักศึกษา
                 await supabase.from('student_hints').delete().neq('id', 0);
                 
                 return true;
@@ -410,15 +410,15 @@
             document.getElementById('alreadyRandomized').classList.add('hidden');
         }
         
-        //  Event Listeners 
+        //Event Listeners 
         document.addEventListener('DOMContentLoaded', async () => {
-            // โหลดข้อมูลจาก Google Sheet
+            //โหลดข้อมูลจาก Google Sheet
             await fetchSheetData();
             
-            // รีเซ็ตการแสดงผลการ์ดเมื่อโหลดหน้าใหม่
+            //รีเซ็ตการแสดงผลการ์ดเมื่อโหลดหน้าใหม่
             resetCardDisplay();
             
-            // ตรวจสอบรหัสนักศึกษาที่บันทึกไว้
+            //ตรวจสอบรหัสนักศึกษาที่บันทึกไว้
             const savedStudentId = localStorage.getItem('lastStudentId');
             if (savedStudentId) {
                 document.getElementById('studentId').value = savedStudentId;
@@ -457,7 +457,7 @@
                 }
             });
             
-            // ปุ่มสุ่มคำใบ้
+            //ปุ่มสุ่มคำใบ้
             document.getElementById('randomButton').addEventListener('click', async () => {
                 const studentId = document.getElementById('studentId').value;
                 createConfetti();
@@ -469,7 +469,7 @@
                 
                 localStorage.setItem('lastStudentId', studentId);
                 
-                // ตรวจสอบจาก Supabase ว่าเคยสุ่มแล้วหรือไม่
+                //ตรวจสอบจาก Supabase ว่าเคยสุ่มแล้วหรือไม่
                 const existingHint = await checkStudentHint(studentId);
                 if (existingHint) {
                     alert('⚠️ รหัสนักศึกษานี้ได้สุ่มคำใบ้ไปแล้ว! คุณสามารถสุ่มได้เพียงครั้งเดียวเท่านั้น');
@@ -482,7 +482,7 @@
                     return;
                 }
                 
-                // สุ่มคำใบ้ใหม่
+                //สุ่มคำใบ้ใหม่
                 document.getElementById('loadingSection').classList.remove('hidden');
                 document.getElementById('randomButton').style.display = 'none';
                 
@@ -490,18 +490,18 @@
                     currentHint = await getRandomHint();
                     
                     if (!currentHint) {
-                        alert('ขออภัย! คำใบ้ทั้งหมดถูกใช้ไปแล้ว กรุณาติดต่อผู้ดูแลระบบ');
+                        alert('คำใบ้ทั้งหมดถูกใช้ไปแล้ว กรุณาติดต่อแชทกลุ่ม IT หรือ ig:misspklk');
                         return;
                     }
                     
-                    // บันทึกลง Supabase
+                    //บันทึกลง Supabase
                     await saveStudentHint(studentId, currentHint.hint);
                     await markHintAsUsed(currentHint.hint);
                     
-                    // แสดงคำใบ้
+                    //แสดงคำใบ้
                     displayHint(currentHint);
                     
-                    // ปิดปุ่มสุ่มใหม่
+                    //ปิดปุ่มสุ่มใหม่
                     document.getElementById('randomButton').classList.add('btn-disabled');
                     document.getElementById('randomButton').disabled = true;
                     document.getElementById('randomButton').textContent = 'คุณได้สุ่มคำใบ้แล้ว';
@@ -515,7 +515,7 @@
                 }
             });
             
-            // ปุ่มเปิดเผยพี่รหัส
+            //ปุ่มกรอกคำใบ้
             document.getElementById('linksheet').addEventListener('click', () => {
                 //window.open('ไว้ใส่ลิงค์ชีท', '_blank');
             });
